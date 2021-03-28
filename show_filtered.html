@@ -1,0 +1,48 @@
+<html>
+    <head>
+	<title>API Sample</title>
+    </head>
+    <body>
+	<h3>
+	    <a href="{{ url_for('home') }}">Example</a>
+	</h3>
+
+
+	<form action="{{ request.path }}" method="post">
+	    first name:<br>
+        <input type="text" name="first_name"><br>
+        last name:<br>
+	    <input type="text" name="last_name"><br>
+	    age:<br>
+	    <input type="text" name="age"><br>
+	    Address:<br>
+	    <input type="text" name="address"><br>
+	    <input type="submit" value="Submit">
+	</form>
+
+
+	<table>
+	    <thead>
+		<tr>
+            <th>first name</th>
+            <th>last name</th>
+		    <th>age</th>
+		    <th>Address</th>
+		</tr>
+	    </thead>
+
+	    <tbody>
+	    {% for user in users %}
+		<tr>
+            <td>{{ user.first_name }}</td>
+            <td>{{ user.last_name }}</td>
+		    <td>{{ user.age }}</td>
+		    <td>{{ user.address }}</td>
+		</tr>
+	    {% endfor %}
+	    </tbody>
+	</table>
+
+
+    </body>
+</html>

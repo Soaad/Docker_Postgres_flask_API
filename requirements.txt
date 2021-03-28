@@ -1,0 +1,5 @@
+Flask
+psycopg2
+flask-sqlalchemy
+requests
+redis
