@@ -4,7 +4,7 @@ services:
   db:
     image: "postgres:9.6.5"
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=TestDB
       - POSTGRES_USER=postgres
@@ -13,7 +13,7 @@ services:
     build: .
     
     volumes:
-      - .:/code
+      - .:/opt/services/flaskapp/src/
     ports:
       - "8000:8000"
     depends_on:
@@ -26,3 +26,5 @@ services:
       - "8080:80"
     volumes:
       - ./conf.d:/etc/nginx/conf.d
+volumes: 
+    postgres_data:

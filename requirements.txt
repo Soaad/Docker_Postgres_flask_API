@@ -1,4 +1,5 @@
 Flask
+Flask-Caching
 psycopg2
 flask-sqlalchemy
 requests
