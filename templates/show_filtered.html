@@ -8,19 +8,6 @@
 	</h3>
 
 
-	<!--<form action="{{ request.path }}" method="post">
-	    first name:<br>
-        <input type="text" name="first_name"><br>
-        last name:<br>
-	    <input type="text" name="last_name"><br>
-	    age:<br>
-	    <input type="text" name="age"><br>
-	    Address:<br>
-	    <input type="text" name="address"><br>
-	    <input type="submit" value="Submit">
-	</form>-->
-
-
 	<table>
 	    <thead>
 		<tr>
@@ -46,7 +33,7 @@
 	    </thead>
 
 	    <tbody>
-	    {% for user in users %}
+	    {% for user in filtered_users %}
 		<tr>
 			<td>{{ user.first_name }}</td>
 			<td></td>

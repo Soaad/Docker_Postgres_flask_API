@@ -1,3 +1,4 @@
+
 import time
 import logging
 from flask_caching import Cache
@@ -12,7 +13,10 @@ DBHOST = 'db'
 DBPORT = '5432'
 DBNAME = 'TestDB'
 
+cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+#Init App
 app = Flask(__name__)
+cache.init_app(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     'postgresql+psycopg2://{user}:{passwd}@{host}:{port}/{db}'.format(
         user=POSTGRES_USER,  # DBUSER,
@@ -20,7 +24,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = \
         host=DBHOST,
         port=DBPORT,
         db=DBNAME)
-app.logger.info(app.config['SQLALCHEMY_DATABASE_URI'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'postgres'
 
@@ -41,26 +44,54 @@ def database_initialization_sequence():
         first_name='John',
         last_name='doe',
         age=20,
-        address='123 Foobar Ave ,los anglos')
+        address='los anglos')
 
     db.session.add(test_rec)
     db.session.commit()
-    for i in range(10000):
+    for i in range(1000000):
         user = Users()
-        user.first_name = 'FirstNAME ' + str(i)
-        user.last_name = 'LastNAME ' + str(i)
+        user.first_name = 'Firstname' + str(i)
+        user.last_name = 'Lastname' + str(i)
         user.age = i
         user.address = 'Address' + str(i)
         db.session.add(user)
     db.session.commit()
-    app.logger.info('database_initialization_sequence finished')
 
 
 @app.route('/users/', methods=['GET'])
 def home():
-    return render_template('show_filtered.html', users=Users.query.limit(5).all())
+    first_name_arg=request.args.get('first_name');#case not passed it will be None
+    last_name_arg=request.args.get('last_name');
+    age_arg=request.args.get('age');
+    address_arg=request.args.get('address');
+   # print("first_name_arg :"+first_name_arg)
+   # print("last_name_arg :"+last_name_arg)
+    #filtered_users=Users.query.limit(100).all()
+    if first_name_arg is not None:
+        filtered_users=Users.query.filter_by(first_name = first_name_arg)
+    if last_name_arg is not None:
+        filtered_users=Users.query.filter_by(last_name=last_name_arg)
+    if age_arg is not None:
+        filtered_users=Users.query.filter_by(age=age_arg)
+    if address_arg is not None:
+        filtered_users=Users.query.filter_by(address=address_arg)
+    return render_template('show_filtered.html',filtered_users=filtered_users )
 
 
+@app.route('/users_Json/', methods=['POST'])
+def api_v2():
+    request_date=request.get_json();
+    if first_name  in request_date:
+       first_name=request_date['first_name'];
+    last_name=request_date['last_name'];
+    age=request_date['age'];
+    address=request_date['address'];
+    print("first_name :"+first_name)
+    print("last_name_arg :"+last_name)
+    return render_template('show_filtered.html', users=Users.query.limit(100).all())
+
+#run Server
 if __name__ == '__main__':
+    #if   Users.query.filter_by(age = 1).count() <= 0 :
     database_initialization_sequence()
     app.run(debug=True, host='0.0.0.0', port=8000)
