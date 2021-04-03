@@ -50,32 +50,30 @@ def database_initialization_sequence():
     db.session.commit()
     for i in range(1000000):
         user = Users()
-        user.first_name = 'Firstname' + str(i)
-        user.last_name = 'Lastname' + str(i)
+        user.first_name = 'FirstNAME' + str(i)
+        user.last_name = 'LastNAME' + str(i)
         user.age = i
         user.address = 'Address' + str(i)
         db.session.add(user)
     db.session.commit()
 
+def get_list(**filters):
+    page = None
+    if 'page' in filters:
+        page = filters.pop('limit')
+        users= Users.query.filter_by(**filters)
+    if page is not None:
+        users = Users.paginate(per_page=int(page)).items
+    else:
+        users = Users.query.filter_by(**filters).limit(100).all()
+    return users
+
+
 
 @app.route('/users/', methods=['GET'])
 def home():
-    first_name_arg=request.args.get('first_name');#case not passed it will be None
-    last_name_arg=request.args.get('last_name');
-    age_arg=request.args.get('age');
-    address_arg=request.args.get('address');
-   # print("first_name_arg :"+first_name_arg)
-   # print("last_name_arg :"+last_name_arg)
-    #filtered_users=Users.query.limit(100).all()
-    if first_name_arg is not None:
-        filtered_users=Users.query.filter_by(first_name = first_name_arg)
-    if last_name_arg is not None:
-        filtered_users=Users.query.filter_by(last_name=last_name_arg)
-    if age_arg is not None:
-        filtered_users=Users.query.filter_by(age=age_arg)
-    if address_arg is not None:
-        filtered_users=Users.query.filter_by(address=address_arg)
-    return render_template('show_filtered.html',filtered_users=filtered_users )
+    users=get_list(**request.args)
+    return render_template('show_filtered.html',users=users )
 
 
 @app.route('/users_Json/', methods=['POST'])
@@ -93,5 +91,5 @@ def api_v2():
 #run Server
 if __name__ == '__main__':
     #if   Users.query.filter_by(age = 1).count() <= 0 :
-    database_initialization_sequence()
+    #database_initialization_sequence()
     app.run(debug=True, host='0.0.0.0', port=8000)
