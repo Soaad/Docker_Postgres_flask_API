@@ -90,6 +90,6 @@ def home():
 
 #run Server
 if __name__ == '__main__':
-    #if not table_exists(engine,Users):
-       # database_initialization_sequence()
+    if not table_exists(engine,'users'):
+        database_initialization_sequence()
     app.run(debug=True, host='0.0.0.0', port=8000)
