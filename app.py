@@ -4,9 +4,11 @@ import logging
 from flask_caching import Cache
 from flask import Flask, render_template, flash, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
+import sqlalchemy as sa
 
-# DBUSER = 'postgres'
-# DBPASS = 'postgres'
+
+
+
 POSTGRES_USER = 'postgres'
 POSTGRES_PASSWORD = 'postgres'
 DBHOST = 'db'
@@ -19,17 +21,23 @@ app = Flask(__name__)
 cache.init_app(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     'postgresql+psycopg2://{user}:{passwd}@{host}:{port}/{db}'.format(
-        user=POSTGRES_USER,  # DBUSER,
-        passwd=POSTGRES_PASSWORD,  # DBPASS,
+        user=POSTGRES_USER,  
+        passwd=POSTGRES_PASSWORD, 
         host=DBHOST,
         port=DBPORT,
         db=DBNAME)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'postgres'
+Users_PER_PAGE = 5
 
 db = SQLAlchemy(app)
+engine = sa.create_engine(app.config['SQLALCHEMY_DATABASE_URI'] )
 
-
+def table_exists(engine,name):
+    ret = engine.dialect.has_table(engine, name)
+    print('Table "{}" exists: {}'.format(name, ret))
+    return ret
+    
 class Users(db.Model):
     id = db.Column('user_id', db.Integer, primary_key=True)
     first_name = db.Column(db.String(100))
@@ -50,46 +58,38 @@ def database_initialization_sequence():
     db.session.commit()
     for i in range(1000000):
         user = Users()
-        user.first_name = 'FirstNAME' + str(i)
-        user.last_name = 'LastNAME' + str(i)
-        user.age = i
-        user.address = 'Address' + str(i)
+        user.first_name = 'Firstn' + str(i)
+        user.last_name = 'Lastname' + str(i)
+        user.age = i+1
+        user.address = 'Address' + str(i+1)
         db.session.add(user)
     db.session.commit()
 
 def get_list(**filters):
-    page = None
-    if 'page' in filters:
-        page = filters.pop('limit')
-        users= Users.query.filter_by(**filters)
-    if page is not None:
-        users = Users.paginate(per_page=int(page)).items
-    else:
-        users = Users.query.filter_by(**filters).limit(100).all()
+    print('users top 10 {}', Users.query.limit(10).all())
+    page = request.args.get('page', 1, type=int)
+    print('page  {}', page)
+    #print('filters  {}', **filters)
+    users = Users.query.filter_by(**filters).paginate(page=int(page),per_page=Users_PER_PAGE)
     return users
 
 
 
 @app.route('/users/', methods=['GET'])
+#@cache.cached()
+
 def home():
     users=get_list(**request.args)
-    return render_template('show_filtered.html',users=users )
-
-
-@app.route('/users_Json/', methods=['POST'])
-def api_v2():
-    request_date=request.get_json();
-    if first_name  in request_date:
-       first_name=request_date['first_name'];
-    last_name=request_date['last_name'];
-    age=request_date['age'];
-    address=request_date['address'];
-    print("first_name :"+first_name)
-    print("last_name_arg :"+last_name)
-    return render_template('show_filtered.html', users=Users.query.limit(100).all())
+    page = request.args.get('page', 1, type=int)
+    next_url = url_for('home', page=users.next_num) \
+    if users.has_next else None
+    prev_url = url_for('home', page=users.prev_num) \
+    if users.has_prev else None
+    return render_template('show_filtered.html',users=users.items ,next_url=next_url,
+                           prev_url=prev_url)
 
 #run Server
 if __name__ == '__main__':
-    #if   Users.query.filter_by(age = 1).count() <= 0 :
-    #database_initialization_sequence()
+    #if not table_exists(engine,Users):
+       # database_initialization_sequence()
     app.run(debug=True, host='0.0.0.0', port=8000)
